@@ -28,6 +28,15 @@ headers.forEach((th, index) => {
 
 function sortByColumn(columnIndex, headerElement) {
   const currentOrder = headerElement.getAttribute('data-order');
+
+  // Скидаємо стан усіх інших колонок на 'desc'
+  // Щоб при кліку на нову колонку вона завжди ставала 'asc'
+  headers.forEach((th) => {
+    if (th !== headerElement) {
+      th.setAttribute('data-order', 'desc');
+    }
+  });
+
   const newOrder = currentOrder === 'desc' ? 'asc' : 'desc';
 
   const sortedRow = Array.from(tbody.querySelectorAll('tr')).sort(
@@ -51,22 +60,12 @@ function sortByColumn(columnIndex, headerElement) {
       let comparator = 0;
 
       if (isNum) {
-        if (valA < valB) {
-          comparator = -1;
-        }
-
-        if (valA > valB) {
-          comparator = 1;
-        }
+        comparator = valA - valB;
       } else {
         comparator = valA.toLowerCase().localeCompare(valB.toLowerCase());
       }
 
-      if (newOrder === 'desc') {
-        comparator *= -1;
-      }
-
-      return comparator;
+      return newOrder === 'asc' ? comparator : comparator * -1;
     },
   );
 
@@ -162,12 +161,12 @@ function createField(configuration) {
   return label;
 }
 
-// 4. Заповнення форми полями
+//  Заповнення форми полями
 formData.forEach((item) => {
   form.appendChild(createField(item));
 });
 
-// 5. Кнопка відправити
+//  Кнопка відправити
 const submitButton = document.createElement('button');
 
 submitButton.type = 'submit';
@@ -229,15 +228,6 @@ form.addEventListener('submit', (e) => {
       );
       isFormValid = false;
       break;
-    }
-
-    if (elemInput.name === 'position' && val.length < 4) {
-      pushNotification(
-        'Warning',
-        'Error, Position must be at least 4 symbols',
-        'warning',
-      );
-      isFormValid = false;
     }
 
     if (elemInput.name === 'age') {
