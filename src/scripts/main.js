@@ -1,3 +1,284 @@
 'use strict';
 
-// write code here
+const table = document.querySelector('table');
+const headers = table.querySelectorAll('th');
+const tbody = table.querySelector('tbody');
+
+function updateRows() {
+  const allRows = tbody.querySelectorAll('tr');
+
+  allRows.forEach((rowTr) => {
+    rowTr.addEventListener('click', () => {
+      allRows.forEach((r) => {
+        r.classList.remove('active');
+      });
+      rowTr.classList.add('active');
+    });
+  });
+}
+updateRows();
+
+headers.forEach((th, index) => {
+  th.setAttribute('data-order', 'desc');
+
+  th.addEventListener('click', () => {
+    sortByColumn(index, th);
+  });
+});
+
+function sortByColumn(columnIndex, headerElement) {
+  const currentOrder = headerElement.getAttribute('data-order');
+  const newOrder = currentOrder === 'desc' ? 'asc' : 'desc';
+
+  const sortedRow = Array.from(tbody.querySelectorAll('tr')).sort(
+    (rowA, rowB) => {
+      const cellA = rowA.children[columnIndex];
+      const cellB = rowB.children[columnIndex];
+
+      const textA = cellA.textContent.trim();
+      const textB = cellB.textContent.trim();
+
+      const isNum = columnIndex === 3 || columnIndex === 4;
+
+      const valA = isNum
+        ? parseFloat(textA.replace('$', '').replace(',', ''))
+        : textA;
+
+      const valB = isNum
+        ? parseFloat(textB.replace('$', '').replace(',', ''))
+        : textB;
+
+      let comparator = 0;
+
+      if (isNum) {
+        if (valA < valB) {
+          comparator = -1;
+        }
+
+        if (valA > valB) {
+          comparator = 1;
+        }
+      } else {
+        comparator = valA.toLowerCase().localeCompare(valB.toLowerCase());
+      }
+
+      if (newOrder === 'desc') {
+        comparator *= -1;
+      }
+
+      return comparator;
+    },
+  );
+
+  // Оновлення DOM //
+  sortedRow.forEach((row) => {
+    tbody.appendChild(row);
+  });
+
+  headerElement.setAttribute('data-order', newOrder);
+}
+
+// створення форми
+const formData = [
+  {
+    label: 'Name:',
+    name: 'name',
+    type: 'text',
+    'data-qa': 'name',
+    required: true,
+  },
+  {
+    label: 'Position:',
+    name: 'position',
+    type: 'text',
+    'data-qa': 'position',
+    required: true,
+  },
+  {
+    label: 'Office:',
+    name: 'office',
+    type: 'select',
+    'data-qa': 'office',
+    required: true,
+    options: [
+      'Tokyo',
+      'Singapore',
+      'London',
+      'New York',
+      'Edinburgh',
+      'San Francisco',
+    ],
+  },
+  {
+    label: 'Age:',
+    name: 'age',
+    type: 'number',
+    'data-qa': 'age',
+    required: true,
+  },
+  {
+    label: 'Salary:',
+    name: 'salary',
+    type: 'number',
+    'data-qa': 'salary',
+    required: true,
+  },
+];
+
+const form = document.createElement('form');
+
+form.setAttribute('method', 'post');
+form.setAttribute('action', 'submit');
+form.classList.add('new-employee-form');
+
+function createField(configuration) {
+  const label = document.createElement('label');
+
+  label.textContent = configuration.label + '';
+
+  let input;
+
+  if (configuration.type === 'select') {
+    input = document.createElement('select');
+
+    // Створюємо опції для select
+    configuration.options.forEach((optText) => {
+      const option = document.createElement('option');
+
+      option.textContent = optText;
+      option.value = optText;
+      input.appendChild(option);
+    });
+  } else {
+    input = document.createElement('input');
+    input.type = configuration.type;
+  }
+  // 3. Додаємо спільні атрибути
+  input.setAttribute('data-qa', configuration['data-qa']);
+  input.name = configuration.name;
+  input.required = true;
+  label.appendChild(input);
+
+  return label;
+}
+
+// 4. Заповнення форми полями
+formData.forEach((item) => {
+  form.appendChild(createField(item));
+});
+
+// 5. Кнопка відправити
+const submitButton = document.createElement('button');
+
+submitButton.type = 'submit';
+submitButton.textContent = 'Save to table';
+form.appendChild(submitButton);
+document.body.appendChild(form);
+
+// створення pushNotification
+const pushNotification = (title, description, type) => {
+  const oldNotification = document.querySelector('.notification');
+
+  if (oldNotification) {
+    oldNotification.remove();
+  }
+
+  const elementDiv = document.createElement('div');
+
+  elementDiv.classList.add('notification', type);
+  elementDiv.setAttribute('data-qa', 'notification');
+
+  const header = document.createElement('h2');
+
+  header.classList.add('title');
+  header.textContent = title;
+
+  const paragraph = document.createElement('p');
+
+  paragraph.textContent = description;
+
+  elementDiv.append(header, paragraph);
+  document.body.appendChild(elementDiv);
+
+  setTimeout(() => {
+    elementDiv.remove();
+  }, 5000);
+};
+
+// ОБРОБКА submit
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  const allInputs = form.querySelectorAll('input , select');
+  let isFormValid = true;
+
+  for (const elemInput of allInputs) {
+    const val = elemInput.value.trim();
+
+    if (!val) {
+      pushNotification('Error', 'All fields are required!', 'error');
+      isFormValid = false;
+      break;
+    }
+
+    if (elemInput.name === 'name' && val.length < 4) {
+      pushNotification(
+        'Error',
+        'The Name value has fewer than 4 letters',
+        'error',
+      );
+      isFormValid = false;
+      break;
+    }
+
+    if (elemInput.name === 'position' && val.length < 4) {
+      pushNotification(
+        'Warning',
+        'Error, Position must be at least 4 symbols',
+        'warning',
+      );
+      isFormValid = false;
+    }
+
+    if (elemInput.name === 'age') {
+      const age = parseFloat(val);
+
+      if (age < 18 || age > 90) {
+        pushNotification(
+          'Error',
+          'The Age value is less than 18 or more than 90!',
+          'error',
+        );
+        isFormValid = false;
+      }
+    }
+  }
+
+  if (isFormValid) {
+    const newRow = document.createElement('tr');
+
+    const formattedSalary =
+      '$' + parseFloat(form.elements['salary'].value).toLocaleString('en-US');
+
+    const values = [
+      form.elements['name'].value,
+      form.elements['position'].value,
+      form.elements['office'].value,
+      form.elements['age'].value,
+      formattedSalary,
+    ];
+
+    values.forEach((text) => {
+      const td = document.createElement('td');
+
+      td.textContent = text;
+      newRow.appendChild(td);
+    });
+
+    tbody.appendChild(newRow);
+    updateRows();
+
+    form.reset();
+    pushNotification('Success', 'Employee added!', 'success');
+  }
+});
