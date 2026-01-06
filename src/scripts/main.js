@@ -4,6 +4,7 @@ const table = document.querySelector('table');
 const headers = table.querySelectorAll('th');
 const tbody = table.querySelector('tbody');
 
+// оновлення рядків
 function updateRows() {
   const allRows = tbody.querySelectorAll('tr');
 
@@ -18,6 +19,7 @@ function updateRows() {
 }
 updateRows();
 
+// спрацьовує: Тільки один раз при завантаженні сторінки.
 headers.forEach((th, index) => {
   th.setAttribute('data-order', 'desc');
 
@@ -26,11 +28,11 @@ headers.forEach((th, index) => {
   });
 });
 
+// сортування колонок
 function sortByColumn(columnIndex, headerElement) {
   const currentOrder = headerElement.getAttribute('data-order');
 
-  // Скидаємо стан усіх інших колонок на 'desc'
-  // Щоб при кліку на нову колонку вона завжди ставала 'asc'
+  // Скидання інших колонок (Логіка перемикання)
   headers.forEach((th) => {
     if (th !== headerElement) {
       th.setAttribute('data-order', 'desc');
@@ -77,7 +79,7 @@ function sortByColumn(columnIndex, headerElement) {
   headerElement.setAttribute('data-order', newOrder);
 }
 
-// створення форми
+// дані для форми
 const formData = [
   {
     label: 'Name:',
@@ -130,6 +132,7 @@ form.setAttribute('method', 'post');
 form.setAttribute('action', 'submit');
 form.classList.add('new-employee-form');
 
+// створення форми
 function createField(configuration) {
   const label = document.createElement('label');
 
@@ -166,7 +169,7 @@ formData.forEach((item) => {
   form.appendChild(createField(item));
 });
 
-//  Кнопка відправити
+// Кнопка submit
 const submitButton = document.createElement('button');
 
 submitButton.type = 'submit';
@@ -204,7 +207,7 @@ const pushNotification = (title, description, type) => {
   }, 5000);
 };
 
-// ОБРОБКА submit
+// обробка submit
 form.addEventListener('submit', (e) => {
   e.preventDefault();
 
@@ -230,7 +233,7 @@ form.addEventListener('submit', (e) => {
       break;
     }
 
-    if (elemInput.name === 'age') {
+    if (elemInput.age === 'age') {
       const age = parseFloat(val);
 
       if (age < 18 || age > 90) {
@@ -272,3 +275,49 @@ form.addEventListener('submit', (e) => {
     pushNotification('Success', 'Employee added!', 'success');
   }
 });
+
+// обробка double click
+
+tbody.addEventListener('dblclick', (e) => {
+  if (e.target.tagName === 'TD') {
+    editTable(e.target);
+  }
+});
+
+// редагування комірки
+function editTable(td) {
+  if (document.querySelector('.cell-input')) {
+    return;
+  }
+
+  const originText = td.textContent.trim();
+
+  // створення input
+  const input = document.createElement('input');
+
+  input.value = originText;
+  input.classList.add('cell-input');
+
+  td.textContent = '';
+  td.appendChild(input);
+  input.focus(); // ставимо курсор в поле
+
+  // збереження кінцевого input
+  const saveTextChanges = () => {
+    const newValue = input.value.trim();
+
+    td.textContent = newValue === '' ? originText : newValue;
+  };
+
+  // обробка blur
+  input.addEventListener('blur', () => {
+    saveTextChanges();
+  });
+
+  // обробка Enter
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      input.blur(); // blur сам викличе saveTextChanges
+    }
+  });
+}
