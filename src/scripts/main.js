@@ -233,7 +233,7 @@ form.addEventListener('submit', (e) => {
       break;
     }
 
-    if (elemInput.age === 'age') {
+    if (elemInput.name === 'age') {
       const age = parseFloat(val);
 
       if (age < 18 || age > 90) {
